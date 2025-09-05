@@ -1,4 +1,4 @@
-# Remote Manager v1.0.13 - Professional Connection Manager
+# Remote Manager v1.0.14 - Professional Connection Manager
 
 A **modern**, **secure**, and **feature-rich** VS Code extension for managing multiple Remote Desktop (RDP), SSH, VNC, and network connections with enterprise-grade architecture and comprehensive testing.
 
@@ -44,6 +44,23 @@ A **modern**, **secure**, and **feature-rich** VS Code extension for managing mu
 - 📜 **Advanced Macro System**: Record, save and replay action sequences automatically
 - 🚀 **Performance Optimized**: Virtual scrolling, caching, and optimized for large datasets
 - 🧪 **Comprehensive Testing**: Unit tests, integration tests, and error handling coverage
+
+## 🆕 What's New in v1.0.14
+
+### Enhanced Debug & Diagnostic Tools
+- 🔧 **Storage Diagnosis**: Advanced diagnostic tools for troubleshooting storage issues
+- 🛠️ **Debug Storage Command**: Interactive storage repair and maintenance utilities
+- 📊 **Storage Health Monitoring**: Comprehensive storage corruption detection and repair
+
+### Improved Help System
+- 🆘 **Integrated Help Menu**: Direct access to GitHub issues and documentation
+- 📖 **About Dialog**: Quick access to version information and project details
+- 🔗 **Connection Tester**: Built-in network connectivity testing tool
+
+### Developer Experience
+- 🐛 **Enhanced Debug Commands**: Complete debug command suite now available in production
+- 🔍 **Storage Migration Tools**: Improved password migration and storage consistency
+- 📦 **Complete VSIX Package**: All debug features now included in production builds
 
 ## 🚀 Quick Start
 
