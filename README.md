@@ -65,7 +65,7 @@ A **modern**, **secure**, and **feature-rich** VS Code extension for managing mu
 ## 🚀 Quick Start
 
 ### First Time Setup
-1. **Open** the **Remote - RDP** sidebar in VS Code (look for the RDP icon in the Activity Bar)
+1. **Open** the **Remote Manager** sidebar in VS Code (look for the RDP icon in the Activity Bar)
 2. **Access Quick Actions** menu from the status bar for rapid operations
 3. **Create a credential** first:
    - Click the "+" button next to "Credentials" 
@@ -261,3 +261,4 @@ For licensing inquiries, contact: mavenshu.dev@gmail.com
 ## 👨‍💻 Author
 
 Developed and maintained by [@mavenshu](https://github.com/mavenshu)
+
