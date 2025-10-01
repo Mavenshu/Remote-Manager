@@ -261,7 +261,3 @@ For licensing inquiries, contact: mavenshu.dev@gmail.com
 ## 👨‍💻 Author
 
 Developed and maintained by [@mavenshu](https://github.com/mavenshu)
-
----
-
-**Thank you for using Remote - RDP!** 🚀
