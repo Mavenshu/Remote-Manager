@@ -1,4 +1,4 @@
-# Remote Manager v1.0.14 - Professional Connection Manager
+# Remote Manager v1.0.16 - Professional Connection Manager
 
 A **modern**, **secure**, and **feature-rich** VS Code extension for managing multiple Remote Desktop (RDP), SSH, VNC, and network connections with enterprise-grade architecture and comprehensive testing.
 
@@ -45,22 +45,45 @@ A **modern**, **secure**, and **feature-rich** VS Code extension for managing mu
 - 🚀 **Performance Optimized**: Virtual scrolling, caching, and optimized for large datasets
 - 🧪 **Comprehensive Testing**: Unit tests, integration tests, and error handling coverage
 
-## 🆕 What's New in v1.0.14
+## 🆕 What's New in v1.0.16
 
-### Enhanced Debug & Diagnostic Tools
+### 🎉 New Context Menu Actions
+
+- **Connect with PSSession**: New option in the context menu (right-click) for an RDP connection. Opens a PowerShell terminal and runs `Enter-PSSession -ComputerName <host>` using the same credentials as the RDP connection.
+- **Connect with SSH**: New option in the context menu (right-click) for an RDP connection. Opens an integrated SSH terminal and constructs the `ssh` command using the associated credentials (password is automatically sent if stored in VS Code secrets).
+
+## 🆕 What's New in v1.0.15
+
+### 🎉 Hierarchical Credential Groups
+- 🌳 **Complete Hierarchy**: Full nested group structure for credentials (like connections)
+- 📊 **Smart Counters**: Each group shows total credentials including all sub-groups
+- 👁️ **Empty Groups**: Groups without credentials remain visible and persistent
+- 🎯 **Simplified Display**: Sub-groups show only their name for cleaner interface
+
+### ✨ New Group Management Commands
+- ➕ **Create Group**: Create root-level credential groups
+- 📁 **Create Sub-Group**: Create nested sub-groups under any group
+- ✏️ **Rename Group**: Rename groups while preserving full hierarchy
+- 🗑️ **Delete Group**: Remove groups with all contents (with confirmation)
+- 🔄 **Move to Group**: Organize credentials by moving between groups
+
+### 🐛 Critical Fixes
+- ✅ **Storage Separation**: Fixed credential groups appearing in connections (and vice versa)
+- ✅ **Sub-Group Level**: Fixed sub-groups creating at wrong level in hierarchy
+- ✅ **Tree Navigation**: Credentials now support full hierarchical navigation
+- ✅ **Validation**: Smart rename validation for sub-groups preserving parent path
+
+### 📦 What's New in v1.0.14
+
+#### Enhanced Debug & Diagnostic Tools
 - 🔧 **Storage Diagnosis**: Advanced diagnostic tools for troubleshooting storage issues
 - 🛠️ **Debug Storage Command**: Interactive storage repair and maintenance utilities
 - 📊 **Storage Health Monitoring**: Comprehensive storage corruption detection and repair
 
-### Improved Help System
+#### Improved Help System
 - 🆘 **Integrated Help Menu**: Direct access to GitHub issues and documentation
 - 📖 **About Dialog**: Quick access to version information and project details
 - 🔗 **Connection Tester**: Built-in network connectivity testing tool
-
-### Developer Experience
-- 🐛 **Enhanced Debug Commands**: Complete debug command suite now available in production
-- 🔍 **Storage Migration Tools**: Improved password migration and storage consistency
-- 📦 **Complete VSIX Package**: All debug features now included in production builds
 
 ## 🚀 Quick Start
 
@@ -114,64 +137,6 @@ A **modern**, **secure**, and **feature-rich** VS Code extension for managing mu
 5. **Select File**: Choose your backup file
 6. **Enter Passwords**: For complete imports, re-enter passwords for security
 
-## 🏗️ Developer Guide
-
-### Architecture Overview
-```
-src/
-├── types/           # TypeScript definitions & interfaces
-├── config/          # Configuration & constants
-├── utils/           # Utility functions & performance helpers
-├── core/            # Business logic & security
-├── data/            # Repository pattern (data access)
-├── services/        # External services & connection managers
-├── ui/              # User interface components
-├── commands/        # VS Code commands & help system
-└── test/            # Comprehensive test suite
-```
-
-### Key Patterns & Improvements
-- **Repository Pattern**: Clean data access with `ConnectionRepository`, `CredentialRepository`
-- **Result Pattern**: Consistent error handling with `Result<T, E>`
-- **Security Layer**: Password validation, secure cleanup, encryption utilities
-- **Performance Layer**: TTL caching, virtual scrolling, debouncing, rate limiting
-- **Testing Framework**: Unit tests, integration tests, error handling coverage
-- **Type Safety**: Comprehensive TypeScript definitions with strict mode
-- **Documentation**: Architectural guides, quality standards, best practices
-
-### Quick Examples
-
-#### Using Repositories
-```typescript
-import { ConnectionRepository } from './data'
-
-const repository = new ConnectionRepository(context)
-const result = await repository.getAll()
-if (result.success) {
-  console.log('Connections:', result.data)
-} else {
-  console.error('Error:', result.error)
-}
-```
-
-#### Creating Commands
-```typescript
-import { BaseCommand } from './commands/base'
-
-export class MyCommand extends BaseCommand<void, string> {
-  async execute(): Promise<Result<string, string>> {
-    // Command implementation
-    return { success: true, data: 'Command executed' }
-  }
-}
-```
-
-For detailed information, see:
-- [`ARCHITECTURE-QUALITY-GUIDE.md`](./ARCHITECTURE-QUALITY-GUIDE.md) - Complete architecture & quality guide
-- [`IMPLEMENTATION-AUDIT-FINAL.md`](./IMPLEMENTATION-AUDIT-FINAL.md) - Audit results & improvements
-- [`ARCHITECTURE.md`](./ARCHITECTURE.md) - Legacy architecture documentation
-- [`MIGRATION_GUIDE.md`](./MIGRATION_GUIDE.md) - Migration from old patterns
-
 ## 🛡️ Security Features
 
 - **Advanced Password Validation**: Comprehensive strength scoring with entropy analysis
@@ -206,27 +171,6 @@ Connections are automatically organized by:
 - **SSH Authentication**: Check SSH keys or try password authentication
 - **Import Errors**: Ensure JSON file format is valid
 - Check the [Issues page](https://github.com/mavenshu/remote-manager/issues) for known problems
-
-### Debug Mode
-- Enable debug logging in VS Code developer tools
-- Check output panel for detailed error messages
-- Use built-in diagnostic commands for storage and connection issues
-
-## 🧪 Testing
-
-### Comprehensive Test Suite
-- **Unit Tests**: Individual component testing with mocks
-- **Integration Tests**: Service interaction validation
-- **Error Handling Tests**: Comprehensive error scenario coverage
-- **VNC Service Tests**: Multi-platform connection testing
-- **Performance Tests**: Load testing and optimization validation
-
-### Running Tests
-```bash
-npm test              # Run full test suite
-npm run build         # Build and validate
-npm run lint:check    # Code quality validation
-```
 
 ## 📋 Requirements
 
