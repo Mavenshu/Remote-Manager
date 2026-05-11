@@ -1,6 +1,18 @@
-# Remote Manager v1.0.16 - Professional Connection Manager
+# Remote Manager v1.0.31 - Professional Connection Manager
 
-A **modern**, **secure**, and **feature-rich** VS Code extension for managing multiple Remote Desktop (RDP), SSH, VNC, and network connections with enterprise-grade architecture and comprehensive testing.
+A **modern**, **secure**, and **feature-rich** VS Code extension for managing multiple Remote Desktop (RDP), SSH (with certificate/key support), and other remote connections with enterprise-grade architecture and comprehensive testing.
+
+## 🆕 What's New in v1.0.31
+
+- **Better Credential Distinction**: Enhanced credential selection UI to display both credential name and username
+- **Improved Credential Labels**: Fixed issue where credentials with same username displayed identically
+- **Clearer Group Assignment**: Better information display when moving credentials between groups
+
+## Previous Release - v1.0.30
+
+- **Clean UI Design**: Removed scrollbars from Quick Actions and Recent Connections for cleaner appearance
+- **Better Visual Clarity**: Improved sidebar layout with hidden scrollbars but maintained scroll functionality
+
 
 ## 🔒 Security & Performance
 
@@ -44,6 +56,187 @@ A **modern**, **secure**, and **feature-rich** VS Code extension for managing mu
 - 📜 **Advanced Macro System**: Record, save and replay action sequences automatically
 - 🚀 **Performance Optimized**: Virtual scrolling, caching, and optimized for large datasets
 - 🧪 **Comprehensive Testing**: Unit tests, integration tests, and error handling coverage
+- 🎯 **SSH Macro Integration**: Execute macros on connections with flexible display modes
+- 🔍 **Network Discovery**: Scan IP ranges to automatically discover and add connections
+- 📁 **Native SFTP File Browser**: Browse and edit remote server files directly in VS Code
+
+## 🆕 What's New in v1.0.25
+
+### 📁 Enhanced Remote File Navigation
+
+Seamless folder navigation directly in VS Code:
+
+- **Direct Tree View Navigation**: No need for separate sessions
+  - Expand SSH connections in Remote Files tree
+  - Browse directories by clicking and expanding folders
+  - Click any folder to add to current workspace or open in new window
+  - Click any file to open in editor
+
+- **Smart Type Detection**: Accurate folder vs file detection
+  - Checks SFTP longname format (first character 'd' for directories)
+  - Verifies mode bits for correct file type identification
+  - Handles edge cases and special files
+
+- **Full File Editing**: Complete VS Code integration
+  - Syntax highlighting based on file extension
+  - Create, delete, rename files and folders
+  - Real-time file synchronization
+
+## 🆕 What's New in v1.0.24
+
+### 📁 Native SFTP File System Provider
+
+VS Code integration with full file system support for SSH connections:
+
+- **Browse Remote Files**: Open and navigate remote server directories in VS Code Explorer
+  - Click "Browse Remote Files" on any SSH connection
+  - Choose custom path or use last used path (saved per connection)
+  - Navigate directories with full file tree support
+
+- **Edit Remote Files**: Full editor support with syntax highlighting
+  - Edit files directly in VS Code
+  - IntelliSense and language features work with remote files
+  - Automatic syntax highlighting based on file extension
+
+- **File Operations**:
+  - Create new files and directories
+  - Delete files and directories
+  - Rename files
+  - Real-time synchronization with remote server
+
+- **Smart Features**:
+  - Automatic SFTP connection pooling and reuse
+  - Last used path memory per connection
+  - Cached directory listings for performance
+  - Automatic cleanup of idle connections
+
+## 🆕 What's New in v1.0.22
+
+### 🔍 Network Discovery - Scan & ADD Connections
+
+- **IP Range Scanning**: Discover hosts on your network
+  - Enter IP ranges using CIDR notation (e.g., `192.168.1.0/24`)
+  - Automatic TCP port discovery for common services
+  
+- **Port Selection**: Choose from standard ports or specify custom
+  - RDP (3389) for Windows machines
+  - SSH (22) for Linux/Unix servers
+  - TELNET (23) for network devices
+  - Custom ports with configurable connection types
+  
+- **Automatic Hostname Resolution**: 
+  - Reverse DNS lookups to get FQDNs
+  - Falls back to IP if hostname lookup fails
+  - Uses resolved names as connection identifiers
+  
+- **Credential Inheritance**: 
+  - New connections inherit credentials from the group
+  - Supports group-level credential assignments
+  - Can override with per-connection credentials
+  
+- **Batch Operations**: 
+  - Create multiple connections in one operation
+  - Progress reporting with cancellation support
+  - Automatic tree view refresh after completion
+
+**Usage**: Right-click on any connection group and select "Scan & Add Connections"
+
+## 🆕 What's New in v1.0.23
+
+### 🕐 Connection History - Instant Access to Recent Connections
+
+- **Quick Access Bar**: View your last 5 connections below the Quick Actions bar
+  - Always visible in the Remote Manager sidebar
+  - Updates automatically after each connection
+  - Persistent history across VS Code sessions
+  
+- **Visual Indicators**: Type icons for quick identification
+  - 🖥️ Remote Desktop (RDP)
+  - 🔐 SSH Connections
+  - 📡 Telnet
+
+- **Features**:
+  - Click to reconnect with one action
+  - Clear history option for privacy
+  - Shows connection name and hostname
+  - Truncated display for long hostnames with hover tooltips
+  
+- **Workflow**: Connect to a server, and it automatically appears in your history for fast re-access
+
+## 🆕 What's New in v1.0.22
+
+### 🔍 Network Discovery - Scan & ADD Connections
+
+- **IP Range Scanning**: Discover hosts on your network
+  - Enter IP ranges using CIDR notation (e.g., `192.168.1.0/24`)
+  - Automatic TCP port discovery for common services
+  
+- **Port Selection**: Choose from standard ports or specify custom
+  - RDP (3389) for Windows machines
+  - SSH (22) for Linux/Unix servers
+  - TELNET (23) for network devices
+  - Custom ports with configurable connection types
+  
+- **Automatic Hostname Resolution**: 
+  - Reverse DNS lookups to get FQDNs
+  - Falls back to IP if hostname lookup fails
+  - Uses resolved names as connection identifiers
+  
+- **Credential Inheritance**: 
+  - New connections inherit credentials from the group
+  - Supports group-level credential assignments
+  - Can override with per-connection credentials
+  
+- **Batch Operations**: 
+  - Create multiple connections in one operation
+  - Progress reporting with cancellation support
+  - Automatic tree view refresh after completion
+
+**Usage**: Right-click on any connection group and select "Scan & Add Connections"
+
+## 🆕 What's New in v1.0.20
+
+### ✨ Custom Command Templates for SSH & PSSession
+
+- **Edit Custom Command**: New context menu option for SSH and RDP connections
+  - Quick access to customize terminal commands without opening full editor
+  - Perfect for users who need special SSH parameters or authentication methods
+  - Commands saved per-connection and persist across sessions
+  
+- **Flexible Placeholder System**: Use dynamic placeholders in your custom commands
+  - `{hostname}` - Replaced with connection hostname
+  - `{username}` - Replaced with credential username
+  - `{password}` - Replaced with password (PSSession compatible)
+  
+- **Examples**:
+  - SSH with custom port & options: `ssh -i /path/to/key {username}@{hostname} -p 2222 -vvv`
+  - PSSession with custom authentication: `$cred = New-Object PSCredential('{username}', (ConvertTo-SecureString '{password}' -AsPlainText -Force)); Enter-PSSession -ComputerName {hostname} -Credential $cred`
+
+- **Smart Defaults**: Leave custom command empty to use the extension's optimized defaults
+
+### 🐛 Bug Fixes
+
+- ✅ **Connection Reload**: Settings now reloaded from database before execution to ensure custom commands are used
+- ✅ **Settings Persistence**: Custom commands properly saved and retrieved for all connection types
+  - Real-time feedback during execution
+
+- **Assign Macro to Connection**: Permanently assign macros to connections
+  - Save macro preferences per connection
+  - Quick access to frequently used command sequences
+  - Macro assignments persist across sessions
+  - Easy macro reassignment via context menu
+
+- **Add Connection to Group**: New context menu action
+  - Create new connections directly in groups
+  - Simplifies hierarchical organization
+  - Right-click on a group to use this feature
+
+### 🐛 Critical Fixes
+
+- ✅ **Credential Display**: Fixed ungrouped credentials disappearing when other credentials have groups
+- ✅ **Macro Synchronization**: Fixed macro file sync issues with automatic updates
+- ✅ **Macro Execution**: Improved macro execution reliability and error handling
+- ✅ **Empty Macros**: Better validation and error messages for empty macro files
 
 ## 🆕 What's New in v1.0.16
 
