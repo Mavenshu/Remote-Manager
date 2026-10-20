@@ -5,6 +5,332 @@ All notable changes to the Remote Manager extension will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0/).
 
+## [1.0.48] - 2026-10-20
+
+### Changed
+
+- README and Marketplace page: added a screenshot presenting the extension (`assets/Presentation.png`).
+
+- VSCode RDP: the floating **VSCode RDP controls** button is removed, because it covered the remote desktop
+  and blocked clicks under it. The information bar is reopened with the new **Show VSCode RDP Controls**
+  command, shown as an ⓘ button in the VSCode RDP tab title bar and in the Command Palette while a
+  VSCode RDP tab is active. Errors still reveal the bar automatically.
+- VSCode RDP: when the server cannot follow a resize, the desktop is scaled to fill the tab (enlarged as
+  well as reduced) instead of only being reduced, still centred and with its aspect ratio preserved.
+
+### Fixed
+
+- VSCode RDP: the remote desktop was shifted about 20 px to the right with its right edge cropped,
+  because the default 20 px body padding VS Code adds to webviews was never removed.
+- VSCode RDP: after resizing the editor (terminal panel, split, window), the desktop was displayed at the
+  previous size. The engine resizes the canvas itself after the server reactivates the display without
+  calling `canvasResizedCallback`; the display now follows canvas size changes directly.
+- VSCode RDP: dynamic resize requests now always use an even width, as required by the RDP display
+  control protocol (MS-RDPEDISP).
+- VSCode RDP: a resize request dropped while the display control channel is unavailable is requested
+  again after 2 seconds, up to 3 times; the status line then reports that the server did not apply it.
+
+## [1.0.47] - 2026-10-19
+
+### Security
+
+- Host names, ports and user names are validated before they are placed in a terminal command,
+  a shell command or a generated `.rdp` file (SSH, Telnet, PuTTY/plink, PSSession, RDP custom
+  commands, Connection Tester, Network Diagnostics). Values that were already valid produce the
+  same commands as before; values containing shell characters, line breaks or a leading dash are refused.
+- JSON import validates every record and keeps known fields only. Invalid records are skipped and
+  reported instead of making the connection list unreadable. Custom commands in an imported file
+  are kept only after confirmation.
+- The delayed password typed after an SSH command is no longer sent when the shell reports that the
+  command already ended (for example when the host is unreachable), and SSH macros stop instead of
+  sending their commands to the local shell.
+- New setting `remoteManager.ssh.strictHostKeyChecking` (`accept-new` by default; `no` and `yes` available)
+  for terminal sessions and the SFTP browser, which now remembers host keys. With `accept-new` a server
+  is trusted the first time and refused if its key later changes; set `no` to keep the former behaviour
+  of accepting any key. SSH terminals now use the user's `known_hosts` file (OpenSSH 7.6 or later).
+- `{password}` in RDP and PSSession custom commands is escaped for the quotes around it (double quotes
+  in RDP/cmd commands, single or double quotes in PowerShell). A password that would start another
+  command when the placeholder is not quoted is refused with a message instead of being executed.
+  Ordinary passwords give the same command as before.
+- The default PSSession command no longer types the password: it is handed to the new PowerShell
+  terminal through its environment and removed from it right away. The account name is escaped for the
+  single quotes it sits in, so names such as `DOMAIN\svc$` or `O'Brien` work and cannot add commands.
+- The RDP custom-command launcher no longer builds a `cmdkey ... && command` prefix containing the
+  password (the credential is already stored before the command runs). Expanded commands are logged
+  with the password masked.
+- In the plink terminal a password that needs quoting is quoted for the terminal's shell (PowerShell or
+  cmd.exe, checked against the real shells); when it cannot be delivered unchanged (for example it contains a
+  double quote) or the shell is not recognised, it is not typed and plink asks for it.
+- The log file no longer records secrets (values of `-pw`, `/pass:`, `password=`, password-like keys,
+  private key blocks, passwords in URLs) and line breaks in logged text can no longer forge log entries.
+- The legacy macro recorder only records and replays Remote Manager commands, never stores values that look
+  like secrets, asks for confirmation before playing a macro and refuses macros that contain other commands.
+  Stored macros are validated when loaded and the Macro Library page escapes everything it displays and
+  runs under a strict Content-Security-Policy.
+- Network scan tools parse addresses and CIDR ranges strictly and refuse ranges larger than a /16 and scans
+  of more than 1,000,000 checks.
+- Settings that control security options, SSH automation and the log and report directories are now
+  application-scoped (user settings only), so that a workspace's `.vscode/settings.json` cannot
+  redirect logs or reports. `connectionPreferences.defaultMethod` and `security.disableClipboardShare`
+  keep their previous scope.
+- Network Diagnostics and SSH Key Generator run their tools without a shell; the SSH Key Generator
+  no longer overwrites an existing key pair and no longer repeats the passphrase in error messages.
+- The name of a Web connection is HTML-escaped in its page.
+- The temporary `.vnc` file used to start a VNC viewer no longer contains the saved password: the viewer
+  asks for it, and the user name stays in the file.
+
+### Fixed
+
+- Encrypted credentials exports could not be imported back (different key derivation settings).
+  Files written by earlier versions remain importable. Quoted CSV fields containing line breaks are
+  now read correctly.
+- SFTP browser: deleting a non-empty folder now works (recursive delete, links are removed and never
+  followed); simultaneous requests share one SSH connection instead of opening several; the keep-alive
+  that was announced in the log is now configured; folder listings are refreshed after write, delete,
+  rename and create; a connection closed before the SFTP session is ready no longer hangs.
+- `remoteManager.ssh.maxPasswordAttempts` and `remoteManager.ssh.automationTimeout` are now honoured by the
+  SSH password automation (SSH with automation and Connect with root). Their declared defaults (1 attempt,
+  5000 ms) did not match what the code has always done (2 attempts, 30 s), so they now declare 2 and 30000:
+  nothing changes unless you set them. A value you may have put in settings.json earlier, which had no
+  effect so far, now applies.
+- VNC: a viewer that is not installed is now detected. The connection used to report success while
+  nothing had started and raised an unhandled error; now the next candidate viewer and the built-in
+  fallbacks are tried, and the usual "No VNC client found" message appears when none starts.
+- SSH key generator: "Use ssh-keygen" now really uses `ssh-keygen`. The availability check always failed
+  on Windows OpenSSH (which answers `-?` with a usage text and exit code 1), so every key came from the local
+  generator. You now get a genuine OpenSSH key pair, ED25519 included, with a one-line public key that can be
+  pasted into `authorized_keys`. The local generator (used when `ssh-keygen` is absent or "Generate locally"
+  is chosen) now names the file and labels the summary after the key it really made: RSA 4096 when ED25519
+  was requested, instead of an RSA key called `id_ed25519_...`.
+- Port scanner: the declared concurrency is now effective (scans were effectively serial), a start port
+  above the end port is handled, and ranges crossing 127.x/128.x are scanned correctly.
+- Legacy macro recording now captures the commands run while recording (it never captured anything), and
+  playing a saved macro after a reload no longer fails on its dates.
+- `remoteManager.security.logLevel` (`minimal`, `standard`, `detailed`) and
+  `remoteManager.security.enableConnectionLogging` are now honoured; the defaults keep the previous
+  output. The log file is buffered, rotated at 5 MB (two older generations kept) and ignores calls made
+  after the extension has been deactivated.
+
+### Changed
+
+- Removed 13 settings that no code ever read, so they never had any effect: `ui.modernIcons`, `ui.showEmojis`,
+  `ui.groupTheme`, `ui.showConnectionStatus`, `ui.detailedTooltips`, `ui.autoExpandGroups`,
+  `security.encryptStorage`, `security.autoCleanupTemp`, `security.tempFileTimeout`, `security.requireSshKey`,
+  `security.warnBeforeSshPassword`, `security.inactivityTimeout` and `security.confirmBeforeDeletion`.
+  Values left in settings.json are ignored.
+- Removed three unused development dependencies (`@vscode/test-electron`, `mocha`, `glob`) and the two
+  overrides that only served them: 80 fewer packages. The VSIX is not affected.
+- Removed 47 source files that nothing referenced (empty placeholders, unused managers, duplicated
+  helpers) and two tests of the removed managers.
+- The VSIX no longer ships compiled tests, SSH library test fixtures and optional native build sources
+  (about 840 files before, 234 now).
+- README: removed claims that the code did not support (military-grade encryption, 0 ESLint warnings,
+  overwriting of temporary files, quality scores) and described the real security behaviour.
+
+### Tests
+
+- `npm test` runs every suite without VS Code: 409 `node:test` tests plus the six legacy suites
+  (error handling, groups, VNC, output paths, integration, performance). The scripts `test`, `test:node`,
+  `test:legacy`, `test:unit`, `test:integration`, `test:performance`, `test:all`, `test:web-rdp` and
+  `test:hardening` all work after `npm run compile`. The password quoting tests run the generated commands in the
+  real Windows PowerShell and cmd.exe, and the key generator tests use the real `ssh-keygen`; they are skipped
+  where those programs are missing. A meta-test fails when a test suite is not listed in `test:node`.
+- Removed the VS Code-hosted test harness (`test/runTest.js`, `test/suite/*`), which could not run.
+
+## [1.0.46] - 2026-10-19
+
+### Added
+
+- `remoteManager.connectionPreferences.defaultRdpClient` selects the external RDP client
+  or VSCode RDP for click, Connect and history. The initial default remains `external`;
+  changes apply to new sessions immediately. Explicit Connect with VSCode RDP is unchanged.
+- The preference is available in VS Code Settings and the existing Connection Preferences shortcut.
+  Unsupported integrated sessions report an error without silently falling back to another client.
+
+### Changed
+
+- Promoted VSCode RDP to the stable release for local VS Code Desktop. Removed the
+  Experimental label from the command, tabs, credential prompts, page and client notice.
+- Preserved existing command identifiers, certificate approvals, saved connections and
+  the existing external RDP connection behavior when selected.
+- Refreshed the README and release overview with the integrated client features from
+  versions 1.0.42 through 1.0.45 and the supported deployment scope.
+
+### Documentation
+
+- Clarified that CA-signed server certificates are accepted automatically when the
+  extension host's Node.js TLS runtime trusts the chain, validity and hostname checks pass,
+  and the certificate supports the negotiated TLS configuration.
+- Retained certificate approval safeguards, AV/EDR caveats and known limitations:
+  no browser/remote extension host support, audio, microphone, shared drives or printers.
+- Stable release status does not replace live-server policy validation or enterprise
+  security-product approval. Earlier release entries retain their historical labels.
+
+## [1.0.45] - 2026-10-19
+
+### Improved
+
+- VSCode RDP errors now use theme-aware notification cards with severity indicators,
+  concise guidance, expandable diagnostic details and settings/close-tab actions.
+- Recoverable clipboard/file errors can be dismissed without interrupting the remote session.
+  Normal session completion is shown as information rather than an error.
+- Removed the redundant Disconnect button. Closing the tab still disposes the relay and sockets.
+- Removed duplicate VS Code error toasts for errors already displayed inside the session.
+
+## [1.0.44] - 2026-10-19
+
+### Added
+
+- Renamed the integrated client to **VSCode RDP** in menus, tabs, prompts and diagnostics,
+  retaining command IDs and certificate storage for compatibility.
+- Dismissible information bar with persistent **Do not show again**, floating restore controls,
+  viewport fitting and optional dynamic remote resizing.
+- VSCode RDP user settings for plain-text clipboard (on by default), explicit clipboard-based
+  file transfers (off by default), auto-resize and banner visibility.
+- Bounded file upload/download with a native save dialog, global clipboard-security override,
+  and regression tests for UI, settings and redirection flows.
+- Documented engine limitations: audio, microphone, shared drives and printers are not exposed.
+
+## [1.0.43] - 2026-10-19
+
+### Fixed
+
+- VSCode RDP failures now show certificate/network error codes and server security negotiation
+  failure reasons. Late relay diagnostics are no longer hidden by a generic browser error.
+- Self-signed and unknown-issuer RDP certificates can be approved explicitly by their SHA-256
+  fingerprint, scoped to the server and port. Approval is stored in SecretStorage; certificate
+  changes require renewed confirmation. Added **Forget VSCode RDP Certificate** to revoke approval.
+  Password/CredSSP authentication remains blocked until certificate verification or approval;
+  expired certificates and recognized certificates with hostname mismatches are still rejected.
+- Added regression tests for explicit approval/refusal, expiry, sanitized diagnostics,
+  server negotiation failure codes and late UI errors.
+
+## [1.0.42] - 2026-10-19
+
+### Added
+
+- **Connect with VSCode RDP - Experimental** in the RDP context menu and command palette.
+  Includes an IronRDP WebAssembly client and an authenticated loopback relay inside the
+  extension host; no additional native executable, service or user installation is required.
+- TLS certificate validation and NLA are mandatory. Unsupported remote extension hosts
+  and untrusted workspaces are rejected explicitly. The regular RDP connection is unchanged.
+- Targeted protocol, authorization, TLS relay and cleanup tests, plus experimental usage
+  guidance and AV/EDR limitations in the README.
+
+## [1.0.41] - 2026-10-06
+
+### ✨ Improvements
+
+- **Configurable output folders**: Added dedicated settings for diagnostic report and log file destinations.
+  - `remoteManager.diagnostics.reportDirectory` controls the folder used to save network diagnostics reports.
+  - `remoteManager.security.logDirectory` controls the folder used to save Remote Manager logs.
+- **Safer default behavior**: When no custom path is configured, files are saved under the system temp folder in `remote-manager/diagnostics` and `remote-manager/logs` instead of a root workspace location.
+- **Documentation update**: Updated release notes and extension guidance in English for the new output path behavior.
+
+### 📦 Packaging
+
+- Bumped package version to `1.0.41` and prepared a new VSIX release.
+
+## [1.0.40] - 2026-06-25
+
+### 🔧 Fixes
+
+- **Extension Activation Regression (blank panel / infinite loading)**: Fixed a critical startup regression introduced in 1.0.39 where the Connections and Credentials tree views showed *"There is no data provider registered"* and the Quick Actions webview spun indefinitely on every launch.
+  - **Root cause 1 — Wrong initialization order**: `SSHMacroManager` was being constructed *before* `createTreeView()` was called. Any uncaught error in its constructor (e.g., a filesystem permission issue when creating the macro storage directory) caused the outer `activate()` catch-block to fire before the tree-view providers were ever registered.
+  - **Root cause 2 — `ensureStorageDirectory()` was non-resilient**: `fs.mkdirSync()` had no error handling; a transient I/O error would propagate all the way up and abort activation.
+  - **Root cause 3 — Unguarded command registration**: The new `collapse-all` and `expand-all` commands introduced in 1.0.39 were registered with the raw VS Code API instead of the project's `CommandRegistry`, so if the extension host reloaded while VS Code still held those command IDs in memory, `registerCommand` would throw and halt activation.
+- **Fix applied**:
+  - Tree views and the webview provider are now registered *first*, before any service that can throw.
+  - `ensureStorageDirectory()` is now wrapped in a `try/catch` so a filesystem error is logged but does not abort activation.
+  - `collapse-all` / `expand-all` command registration is now wrapped in a `try/catch` so a duplicate-command error is handled gracefully.
+
+### 📦 Packaging
+
+- Bumped package version to `1.0.40` and generated a new VSIX for release.
+
+## [1.0.39] - 2026-06-25
+
+### ✨ New Features
+
+- **Collapse / Expand All Toggle**: The "Collapse All" button in the Connections tree view now acts as a toggle. Clicking it collapses all groups; clicking it again expands them all back. The button icon switches between `$(collapse-all)` and `$(expand-all)` accordingly.
+
+### 🔧 Fixes
+
+- **SSH with Macro — Password Sent Too Early**: Increased the delay before the password is sent during "Connect with Macro" from 1.5 s to 3 s, matching the timing used by the regular SSH connection service. This prevents the password from being injected into the terminal before the SSH server has displayed its password prompt.
+
+### 📦 Packaging
+
+- Bumped package version to `1.0.39` and generated a new VSIX for release.
+
+## [1.0.38] - 2026-06-25
+
+### ✨ New Features
+
+- **Terminal History**: Added "Terminal History" option to the Quick Actions terminal menu. Prompts the user to choose between Linux/Bash (`history`) or Windows PowerShell (`Get-History | Format-Table -AutoSize`) and sends the corresponding command to the active terminal.
+- **Clear Terminal**: Added "Clear Terminal" option to the Quick Actions terminal menu. Clears the active integrated terminal using the built-in VS Code command.
+
+### 📦 Packaging
+
+- Bumped package version to `1.0.38` and generated a new VSIX for release.
+
+## [1.0.37] - 2026-06-05
+
+### 🔧 Fixes
+
+- Fixed remote SFTP file browser display so the connection name/host is shown instead of the internal connection ID.
+- Bumped package version to `1.0.37` and generated a new VSIX for release.
+
+## [1.0.36] - 2026-06-04
+
+### 🔒 Security & Settings
+
+- **Security Settings Added**: Implemented a full `Settings > Security Settings` section with options for encrypting storage, temporary file cleanup, SSH key enforcement, clipboard sharing disable, inactivity lock, connection logging and log level controls.
+- **Settings Wiring**: Settings are exposed under `remoteManager.security.*` and accessible via VS Code Settings.
+
+### 📦 Packaging
+
+- **Version Bump & VSIX**: Bumped package version to `1.0.36` and produced a new VSIX for release.
+
+### ⚙️ Notes
+
+- Update to `package.json` and `src/config/settings.ts` to support the new security settings getters.
+
+## [1.0.35] - 2026-06-04
+
+### ✨ New Features
+
+- **SSH Macro Library Display**: Implemented comprehensive SSH Macro Library interface with browseable macro catalog, detailed macro information, and direct action menu
+- **SSH Macro Library Actions**: Added execute, edit, configure, and view details options directly from the macro library with server target management
+
+### 🔧 Improvements
+
+- **Simplified Macro Menu**: Streamlined SSH Macros menu by removing redundant options and consolidating functionality into the unified SSH Macro Library
+- **Better User Experience**: Users can now browse, manage, and execute macros from a single cohesive interface
+
+## [1.0.33] - 2026-05-14
+
+### 🔧 Fixes & Improvements
+
+- **Root SSH automation improved**: Fixed root connection flow to better synchronize SSH password and `su` command execution
+- **More reliable password handling**: Added fallback retry sends for password prompts when terminal output events are unavailable
+- **Updated release notes**: Refreshed changelog and packaging metadata for the new version
+
+## [1.0.34] - 2026-06-04
+
+### ✨ Improvements
+
+- **Quick Actions: Export & Import Configuration**: Added direct access from Quick Actions > Settings to export and import configuration files (connections and credentials). Uses existing import/export service and refreshes views after import.
+- **Menu polish**: Improved Settings menu wiring and updated UI labels for clarity.
+- **Packaging**: Bumped extension version and prepared VSIX for release.
+
+## [1.0.32] - 2026-05-12
+
+### 🚀 New in this release
+
+- **Quick Assign Credential**: Added `Assign Credential` to the connection context menu for faster credential assignment
+- **Privileged port support**: Fixed port prompts so valid ports below `1024` like `22` are accepted during connection editing
+- **Stable package update**: Built a new production-ready VSIX for the latest stable version
+
 ## [1.0.31] - 2026-05-07
 
 ### 🔧 Improvements
