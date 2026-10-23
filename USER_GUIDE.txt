@@ -1,0 +1,503 @@
+====================================================================================================
+                                    REMOTE MANAGER — USER GUIDE
+====================================================================================================
+
+Last updated: 23 October 2026
+
+
+GETTING STARTED
+===============
+
+Remote Manager keeps all your remote connections (Windows desktops, Linux servers, network
+equipment, web interfaces, console cables) in one list inside VS Code, and opens any of them in one
+click. Your user names and passwords are saved once, securely, and used for you when you connect.
+
+This guide starts with what you do every day and ends with the occasional tools. Read the first four
+sections to be productive; come back to the others when you need them.
+
+Where to find it
+----------------
+
+Click the Remote Manager icon in the Activity Bar (the vertical bar on the left of VS Code). The
+side bar then shows three panels:
+
+  Panel           What it holds
+  -------------   ----------------------------------------------------------------------------------
+  Quick Actions   Buttons for Terminal, Tools, Settings, Macros and Help, plus your Recent
+                  Connections
+  Connections     Every saved connection, organized in groups and sub-groups
+  Credentials     Your saved user names and passwords, also organized in groups
+
+A fourth panel, Remote Files, appears in the Explorer (the files side bar) when you browse the files
+of a server.
+
+The buttons at the top of a panel
+---------------------------------
+
+Move the mouse over the title of the Connections or Credentials panel to show its buttons:
+
+  - + creates a connection (or a credential).
+  - The folder button creates a group.
+  - Expand All and Collapse All open or close every group at once.
+  - The ... menu holds the less frequent actions: import, export and Sort By....
+
+Right-click any connection, credential or group to see everything you can do with it.
+
+
+CONNECTING
+==========
+
+Click a connection in the Connections panel: it opens with its saved credential, and you have
+nothing to type. Right-clicking it and choosing Connect does the same.
+
+The connections you open are listed in Quick Actions > Recent Connections. Click one there to reopen
+it; Clear empties the list.
+
+What opens, by type
+-------------------
+
+  Type                             What opens when you click it
+  ------------------------------   -----------------------------------------------------------------
+  RDP (Windows desktop)            The Windows Remote Desktop client, already signed in. To open the
+                                   desktop in a VS Code tab instead, right-click and choose Connect
+                                   with VSCode RDP
+  SSH (Linux server, appliance)    A VS Code terminal. The saved password is typed for you when the
+                                   server asks for it
+  Telnet (older equipment)         A VS Code terminal. Telnet is not encrypted: prefer SSH when the
+                                   device offers it
+  VNC (shared screen)              Your VNC viewer (RealVNC, TightVNC or UltraVNC must be installed)
+  Web (iDRAC, iLO, ESXi,           The web page in a VS Code tab, or in your browser when the device
+  firewall...)                     does not allow being shown inside VS Code. Remote Manager tells
+                                   you which and why
+  Serial Console (console cable)   A terminal connected to the cable, at the speed you chose (9600
+                                   8N1 by default)
+  WSL (Linux on this PC)           A terminal in the distribution, or its SSH, RDP or Telnet server,
+                                   as set in the connection
+
+When something is asked
+-----------------------
+
+  - A password you did not save, or chose to type each time: VS Code asks for it once for this
+    connection.
+  - A certificate to trust (VSCode RDP, the first time): compare the fingerprint shown with the one
+    your administrator gives you before clicking Trust This Certificate.
+  - Type Password in a notification (SSH): Remote Manager could not see the password prompt. Click
+    the button when the terminal asks for the password.
+
+Ending a session
+----------------
+
+Close the Remote Desktop window, the VS Code tab, or the terminal. A VSCode RDP session ends when
+you close its tab.
+
+
+CREATING AND EDITING CONNECTIONS
+================================
+
+Click + at the top of the Connections panel and answer the questions; each one has a sensible
+default, so Enter is often enough.
+
+  1. Type: RDP, SSH, Telnet, VNC, Web, Serial Console or WSL.
+  2. Address: the host name or IP address (server01, 192.168.1.20), the web address for a Web
+     connection, the port for a serial console (COM3), or the distribution for WSL.
+  3. Name: how it shows in the list. A name is proposed from the address.
+  4. Group (optional): an existing group, a new one, or no group.
+  5. Settings of the type: the port when it is not the usual one (RDP 3389, SSH 22, Telnet 23, VNC
+     5900), the speed and format of a serial line, or what a WSL connection opens.
+  6. Credential (optional): the saved user name and password to sign in with. Leave it empty to use
+     the credential of the group (see the next section).
+
+To create a connection directly in a group, right-click the group and choose Add Connection to
+Group.
+
+Changing a connection
+---------------------
+
+Right-click the connection:
+
+  Action                 What it does
+  --------------------   ---------------------------------------------------------------
+  Update Connection      Change its name, address, port or credential
+  Assign Credential      Change only the credential, or make it use the one of its group
+  Duplicate Connection   Make a copy, for a similar server
+  Move to Group          Put it in another group (dragging it works too)
+  Delete Connection      Remove it after a confirmation. The credential it used is kept
+
+The icon of a connection shows its type at a glance: green for SSH, blue for RDP, orange for Telnet
+and network equipment, purple for VNC and WSL, yellow for serial consoles. Hover a connection to see
+its address, protocol, group and assigned macro.
+
+
+CREDENTIALS
+===========
+
+A credential is a user name with its password (or SSH key), saved once and used by as many
+connections as you like. Change the password in one place and every connection using it follows.
+
+Passwords are kept in the secure storage of your operating system, never in a file you could share
+by mistake.
+
+Creating a credential
+---------------------
+
+Click + at the top of the Credentials panel, then give:
+
+  1. Name and user name: for example Domain admin and CORP\admin.
+  2. Protocol: SSH, RDP, Telnet, VNC, Web, Network, Database, Cloud or Other. It helps you find it
+     and lets a group hold one credential per protocol.
+  3. How you sign in: a password, an SSH private key (with or without passphrase) or an SSH
+     certificate.
+  4. Store the password, or Ask for password each time if you prefer to type it at every connection.
+  5. Root access (SSH, Telnet, optional): the root password used by Connect with Root.
+
+You can also create one on the fly while creating a connection: choose Create New Credential in the
+list.
+
+One credential for a whole group
+--------------------------------
+
+Instead of setting the credential of each connection, right-click a group in the Connections panel
+and choose Assign Credential to Group. Every connection of the group, and of its sub-groups, uses it
+unless it has its own.
+
+  - A group can hold one credential per protocol: one for its SSH servers, another for its RDP
+    desktops.
+  - A connection set to Inherit from Group follows the group's credential.
+  - A credential assigned directly to a connection always wins.
+
+Changing or deleting a credential
+---------------------------------
+
+Right-click the credential: Update changes its name, user name, password, protocol or root access;
+Move to Group files it elsewhere; Delete removes it. When connections use it, the confirmation lists
+them, and they are left without a credential.
+
+
+ORGANIZING CONNECTIONS AND CREDENTIALS
+======================================
+
+Groups and sub-groups work like folders, for example Paris / Production / Web. They exist in both
+panels, separately: a group of connections and a group of credentials are not linked, even with the
+same name.
+
+Creating groups
+---------------
+
+  - The folder button at the top of a panel creates a top-level group.
+  - Right-click a group and choose Create Sub-Group to create one inside it.
+  - Rename Group and Delete Group are in the same menu. Deleting a group deletes everything inside
+    it, after a confirmation that says how much.
+
+Moving by drag and drop
+-----------------------
+
+Drag a connection, a credential or a whole group and drop it:
+
+  Dropped on                       Result
+  ------------------------------   ------------------------------------------
+  A group                          It goes into that group
+  A connection or credential       It goes into the group of that item
+  The empty space below the list   It goes to the top level, out of any group
+
+A moved group keeps its name and takes all its contents along, including the credential assigned to
+it. A group cannot be dropped into one of its own sub-groups, nor next to a group of the same name;
+a message says why.
+
+Working on several items at once
+--------------------------------
+
+Hold Ctrl and click to select several items, or Shift to select a range. Then:
+
+  - Drag them together into a group.
+  - Right-click and choose Move to Group: pick the group in the list, or Top level.
+  - Right-click and choose Delete: a single confirmation for the whole selection.
+
+An item inside a selected group simply follows its group.
+
+Sorting
+-------
+
+Open the ... menu of the panel and choose Sort By...:
+
+  Order                   Connections   Credentials
+  ---------------------   -----------   -----------
+  Name A to Z (default)   Yes           Yes
+  Name Z to A             Yes           Yes
+  By protocol             Yes           Yes
+  By host                 Yes           -
+  By user name            -             Yes
+  Custom order            Yes           Yes
+
+Groups always come first, then the items of that level. Numbers sort naturally: srv2 comes before
+srv10.
+
+Your own order
+--------------
+
+Choose Custom order, then:
+
+  - drag an item onto another one to place it just before it, or
+  - right-click an item or a group and use Move Up or Move Down.
+
+The order is remembered, also when you rename or move a group.
+
+Opening and closing groups
+--------------------------
+
+Expand All opens every group and sub-group; Collapse All closes them all. Both buttons are at the
+top right of each panel.
+
+
+OTHER WAYS TO CONNECT
+=====================
+
+The click opens the usual way; the right-click menu of a connection offers the others, depending on
+its type.
+
+- Connect with VSCode RDP
+    Type: RDP
+    When to use it: Open the Windows desktop in a VS Code tab, next to your code and terminals
+- Connect with SSH
+    Type: RDP
+    When to use it: Open a terminal on a Windows server that also runs an SSH server
+- Connect with PSSession
+    Type: RDP
+    When to use it: Open a remote PowerShell session on a Windows server
+- Connect with Root
+    Type: SSH, Telnet
+    When to use it: Sign in, then switch to root: the root password of the credential is typed when
+      asked
+- Connect with PuTTY
+    Type: SSH, Telnet
+    When to use it: Open the session in PuTTY (or plink) instead of the VS Code terminal
+- Connect with Macro
+    Type: SSH, Telnet
+    When to use it: Connect and run a saved list of commands (see SSH macros below)
+- Connect With...
+    Type: Serial, WSL
+    When to use it: Open it once with another program or protocol (PuTTY, picocom, screen; or SSH,
+      RDP, Telnet for WSL)
+
+To make VSCode RDP the default for every RDP click, set Settings > Remote Manager > Connection
+Preferences: Default Rdp Client to vscode.
+
+VSCode RDP in practice
+----------------------
+
+  - The bar at the top of the tab holds Send files..., Save remote file... and Settings. Close it
+    with its cross; the info button in the tab title brings it back.
+  - Text copied on one side can be pasted on the other.
+  - File transfer is off by default: turn on remoteManager.vscodeRdp.fileTransfer in the settings,
+    then reconnect.
+  - Sound, microphone, shared drives and printers are not available in the tab: use the normal
+    Connect for those.
+  - Forget VSCode RDP Certificate removes a certificate you trusted, for example after the server
+    changed it.
+
+Your own connection command
+---------------------------
+
+For RDP and SSH connections, Edit Custom Command replaces the command used to connect, for example
+to fix the window size (mstsc.exe {rdpFilePath} /w:1600 /h:900) or to use a specific SSH key. Write
+{hostname}, {username} or {rdpFilePath} where the values go; leave the field empty to return to the
+default.
+
+
+BROWSING AND EDITING THE FILES OF A SERVER
+==========================================
+
+Right-click an SSH connection and choose Browse Remote Files: the files of the server open in VS
+Code, and you edit them as if they were on your computer. Saving a file saves it on the server.
+
+  1. Choose the folder to open: the one you used last time with this server is proposed.
+  2. The folder appears in the Remote Files panel of the Explorer.
+  3. Click a file to open it in the editor; click a folder to open it, add it to your workspace or
+     open it in a new window.
+
+Right-click in the tree to create, rename or delete files and folders.
+
+  - The first time, the server's identity is remembered. If it changes later, VS Code asks before
+    trusting it again: check with the administrator of the server.
+  - Only one extension of VS Code can open server files this way. If another SFTP extension is
+    installed, a warning names it at startup: disable one of the two in that window.
+
+
+RUNNING THE SAME COMMANDS ON SEVERAL SERVERS
+============================================
+
+Three tools save you from typing the same thing again and again. Pick the one that matches your
+need:
+
+  Need                             Tool
+  ------------------------------   ------------------------
+  A list of commands you run       SSH macro
+  often, on one or many servers
+  Typing live in several           Multi-Terminal Broadcast
+  terminals at the same time
+  Replaying a sequence of Remote   Recorded macro
+  Manager actions
+
+SSH macros
+----------
+
+An SSH macro is a saved list of commands, one per line. Running it opens a terminal per server (SSH
+or Telnet), signs in, then types the commands for you.
+
+  1. Quick Actions > Macros > Create SSH Macro: give it a name and its commands. Lines starting with
+     # are comments.
+  2. Run it with Execute SSH Macro, choosing the servers, one after the other or all at once. Or
+     right-click a connection and choose Connect with Macro.
+  3. SSH Macro Library lists your macros to run, edit or delete them.
+
+  - $HOST is replaced by the address of the server and $USER by the user name of its credential.
+  - Assign Macro to Connection makes a macro the first one proposed for that connection.
+  - Commands are typed only once the server's prompt is shown. If it cannot be recognised, a Send
+    Commands button lets you say when the server is ready. If the connection fails, nothing is
+    typed.
+
+Multi-Terminal Broadcast
+------------------------
+
+Open your sessions first, then Quick Actions > Terminal > Multi-Terminal Broadcast and tick at least
+two terminals. A menu then offers:
+
+  - Send command: type a command, it runs in every selected terminal.
+  - Paste text: send the clipboard to all of them, after a confirmation.
+  - Repeat last, History and Quick commands: re-run what you sent, or pick a common command.
+  - Stop broadcast: end the session (also Quick Actions > Terminal > Stop Broadcast).
+
+Recorded macros
+---------------
+
+Press Ctrl+Shift+F9 to start recording, use Remote Manager as usual, then Ctrl+Shift+F10 to stop.
+Ctrl+Shift+F11 replays a saved macro, after showing you the list of its steps. Passwords are never
+recorded.
+
+
+BACKING UP AND MOVING TO ANOTHER COMPUTER
+=========================================
+
+Two exports exist, because connections and passwords are not equally sensitive:
+
+- Export Configuration
+    Where: ... menu of Connections
+    Holds: Connections and groups, credential names and user names, no password
+    Protected by: Nothing: keep it private all the same
+- Export Credentials (Encrypted CSV)
+    Where: ... menu of Credentials
+    Holds: Every credential with its password
+    Protected by: A password of at least 12 characters you choose
+
+To move everything to a new computer, make both exports, then use Import Configuration and Import
+Credentials (Encrypted CSV) there. Export and Import Configuration are also in Quick Actions >
+Settings.
+
+What the import asks you
+------------------------
+
+  - The password of the CSV: without it the file cannot be read. There is no way to recover a
+    forgotten one.
+  - Credentials already present: Replace them with those of the file, or Keep existing and add only
+    the new ones.
+  - Custom commands found in the file: import them only if you trust where the file comes from,
+    since they run as written when you connect.
+  - Connections that would use one of your saved passwords: they are set aside in an Imported group
+    until you confirm with Use Saved Credentials. This protects your passwords from a file prepared
+    by someone else.
+
+Items that are invalid in the file are skipped; the message after the import says how many.
+
+
+TOOLS
+=====
+
+The small tools are in Quick Actions > Tools, except Scan & Add Connections, which is in the
+right-click menu of a group. You will not need them every day, but they save time when a connection
+does not work or when you set up new servers.
+
+  Tool                     What it is for
+  ----------------------   -------------------------------------------------------------------------
+  Connection Tester        Check whether a server answers on a port (3389 RDP, 22 SSH, 23 Telnet,
+                           5900 VNC...). First thing to try when a connection fails
+  Network Diagnostics      Find why a server cannot be reached: DNS lookup, reverse DNS, traceroute
+                           and port checks, on an address or a saved connection
+  Scan & Add Connections   Find the machines of a network that answer on a port (RDP, SSH, Telnet or
+                           another) and add them to the group in one go
+  Port Scanner             List the open ports of a range of addresses, to see which services they
+                           offer
+  Password Generator       Make a strong random password of the length and characters you choose
+  SSH Key Generator        Make an SSH key pair, to sign in to Linux servers without a password
+  Serial Console           Open a console cable directly, without creating a connection first
+
+Using them well
+---------------
+
+  - Connection Tester answers one question: is the port open? If it is but the connection still
+    fails, look at the credential; if it is not, use Network Diagnostics.
+  - Scan & Add Connections takes a range written like 192.168.1.0/24 (the 254 addresses from .1 to
+    .254). Only scan networks you are allowed to scan.
+  - Port Scanner asks for the first and last address, then the first and last port (for example 1 to
+    1024). Large ranges take a while; a progress notification shows how far it is.
+  - Password Generator copies the password to the clipboard and empties the clipboard one minute
+    later. Show displays it if you need to read it.
+  - SSH Key Generator offers ED25519 (recommended), RSA 2048 or RSA 4096, an optional comment and an
+    optional passphrase. The keys are saved in the .ssh folder of your user profile, never
+    overwriting an existing one. Give the public key to the server administrator; keep the private
+    key to yourself.
+  - Serial Console proposes 9600 8N1, the setting of Cisco consoles, then the last settings you
+    used. While a console is open, Send Break in the status bar sends the break signal needed for
+    password recovery on network equipment.
+
+
+SETTINGS AND HELP
+=================
+
+Open the settings from Quick Actions > Settings, or in VS Code with File > Preferences > Settings,
+then search for Remote Manager. The defaults suit most people; these are the ones worth knowing.
+
+- Connection Preferences: Default Rdp Client
+    What it changes: Open RDP in the Windows client or in a VS Code tab
+    Default: Windows client
+- Connections Sort Order / Credentials Sort Order
+    What it changes: The order of each panel (also set from Sort By...)
+    Default: Name A to Z
+- SSH: Strict Host Key Checking
+    What it changes: Trust a server the first time and refuse it if its identity changes
+    Default: Trust the first time
+- SSH: Max Password Attempts
+    What it changes: How many times the saved password is typed when the server asks again
+    Default: 2
+- Security: Rdp Server Authentication
+    What it changes: Warn, refuse or accept an RDP server whose identity cannot be checked
+    Default: Warn
+- Security: Disable Clipboard Share
+    What it changes: Stop copy and paste between your computer and remote desktops
+    Default: Off
+- VSCode RDP: Clipboard, File Transfer, Auto Resize
+    What it changes: Copy and paste, file transfer and desktop size in the VS Code tab
+    Default: On, off, on
+- Serial: Default Client
+    What it changes: Program used for serial consoles
+    Default: Built-in console
+
+When something goes wrong
+-------------------------
+
+  Problem                          What to check
+  ------------------------------   -----------------------------------------------------------------
+  RDP or SSH does not connect      Connection Tester on the port, then the credential of the
+                                   connection or of its group
+  The password is refused          The user name format (DOMAIN\user for Windows), then Update the
+                                   credential
+  A web page stays blank or        Choose Open in browser: many devices do not allow being shown
+  refuses to sign in               inside VS Code
+  Serial port busy                 Close the other program using the cable (PuTTY, another console)
+  A WSL connection does not        The SSH, RDP (xrdp) or Telnet server must be installed and
+  answer                           started in the distribution
+
+Getting help
+------------
+
+Quick Actions > Help opens this User Guide, the Documentation, About Remote Manager (the version you
+use) and Report Issue, to tell the developer about a problem. Say what you did, what you expected
+and what happened; never include a password.
