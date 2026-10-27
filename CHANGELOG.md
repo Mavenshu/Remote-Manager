@@ -5,11 +5,454 @@ All notable changes to the Remote Manager extension will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0/).
 
-## [1.0.48] - 2026-10-20
+## [1.0.58] - 2026-10-23
+
+### Fixed
+
+- **The saved SSH password is typed again when the default terminal is cmd.exe.** VS Code does not report the output
+  of cmd.exe to extensions, so Remote Manager could not see the password prompt and only offered *Type Password*. This
+  happened with the JavaSE terminal profiles of the Java extensions, which run cmd.exe. *Connect*, *Connect with SSH*,
+  *Connect with Root* and *Connect with PuTTY* (integrated terminal) now open their terminal with Windows PowerShell
+  when the default shell is not one whose output VS Code reports; PowerShell, pwsh and Git Bash stay as chosen.
+
+## [1.0.57] - 2026-10-23
+
+### Added
+
+- **Drag and drop in the Connections and Credentials views.** Drag a connection, a credential or a group onto a group
+  to move it there, onto a connection or credential to move it into that item's group, or onto the empty part of the
+  view to move it to the top level. A moved group keeps its name and takes its sub-groups, connections or credentials
+  and group credentials along. A group cannot be dropped into itself or one of its sub-groups, nor onto a group that
+  already holds a group of the same name. A group emptied by the move stays visible.
+- **Multiple selection.** Ctrl-click or Shift-click selects several groups, connections or credentials. Drag them
+  together, or right-click and use *Delete* (one confirmation for the whole selection) or *Move to Group*. Items
+  inside a selected group go along with it. *Move to Group* is also offered on a group, to move it under another one
+  or to the top level.
+- **Sort By... in the "..." menu of the Connections and Credentials views**: name A → Z (the default, now with numbers
+  in natural order: `srv2` before `srv10`), name Z → A, protocol, host (connections) or user name (credentials), or a
+  custom order. The choice is saved in the `remoteManager.connectionsSortOrder` and
+  `remoteManager.credentialsSortOrder` settings. Groups always come before the items of their level.
+- **Custom order.** With *Custom order*, drag a connection or credential onto another one to place it just before
+  it, or right-click a group or an item and use *Move Up* / *Move Down*. The order follows a renamed or moved group.
+- **User Guide.** *Quick Actions > Help > User Guide* (also *Help > Remote Manager User Guide* in the VS Code menu
+  and the Command Palette) opens the guide for users on GitHub, from everyday tasks to the occasional tools.
+
+### Changed
+
+- The Connections view uses the *Collapse All* button of VS Code, as the Credentials view does: it is at the same place
+  in both title bars. An *Expand All* button next to it, in both views, opens every group at every depth. It replaces
+  the former Collapse All / Expand All toggle of the Connections view, whose Expand All lacked what VS Code needs to
+  open groups (`getParent`).
+- Credentials view title bar: *Export* / *Import Credentials (Encrypted CSV)* moved to the "..." menu, next to
+  *Sort Credentials By...*.
+
+### Fixed
+
+- The protocol groups of the Credentials view (shown while you have no group of your own) showed no credentials when
+  opened. Their right-click menu no longer offers the actions of a group of your own (rename, delete, move, create in
+  group, create sub-group), which had no effect on them.
+- The count shown on a group no longer includes the items of a sibling group whose name starts the same (`Web` counted
+  the connections of `Web2`), in both views.
+- Deleting a sub-group no longer makes its parent disappear when the parent is left empty.
+- Credentials in a sub-group whose top-level group held no credential of its own (`Team/Ops` without any credential
+  in `Team`) did not show in the Credentials view.
+
+## [1.0.56] - 2026-10-23
+
+### Added
+
+- **Create Group button in the Connections and Credentials views.** A folder button in the title bar of each view
+  creates a top-level group, which stays visible while empty. Before, a top-level group only appeared once a connection
+  or credential was saved in it. As after *Create Sub-Group*, you are then offered to create an item in the group or to
+  move an existing one into it.
+
+### Fixed
+
+- *Create Sub-Group* reports a group that already exists without connections or credentials, instead of silently
+  doing nothing.
+
+## [1.0.55] - 2026-10-23
+
+### Added
+
+- **Warning about other extensions that open sftp:// addresses.** VS Code gives the `sftp` scheme to the first extension
+  that registers it, so the Remote Manager file browser (Browse Files, Remote Files) and another SFTP extension cannot
+  both work in a window. When such an extension is installed, a warning names it at startup (**Don't Show Again** hides
+  it until another one appears). When the other extension holds the scheme, the warning says that the file browser is
+  not available, and *Browse Files* explains why it cannot open instead of handing the address to that extension.
+
+### Changed
+
+- **VSCode RDP uses ironrdp-wasm 1.2.0**, the browser RDP engine that VSCode RDP embeds (1.1.0 before).
+- **Packaging.** The extension is packaged with `@vscode/vsce` 4.0.0, which needs Node.js 22 or later to build the VSIX.
+  The vulnerable dependencies of the former packaging tool (`npm audit`) are gone; the VSIX holds the same files.
+- **Code organisation.** The command handlers moved from `extension.ts` (1,870 lines) to modules grouped by what they act
+  on (`src/registration`); `extension.ts` keeps the activation. A test now activates the extension and checks that every
+  command of the manifest is registered, once.
+
+### Security
+
+- **RDP password no longer on the command line of cmdkey.** *Connect* handed the saved password to the Remote Desktop
+  client with `cmdkey /pass:<password>`, a command line that other programs of the session and process creation logs
+  (event 4688, EDR) can read. cmdkey now runs in a hidden VS Code terminal and the password is typed at its prompt.
+  - A credential you saved yourself for the server in Windows (for example with *Remember me*) is used as it is: it
+    was overwritten, then deleted two minutes later.
+  - The credential written by Remote Manager is deleted after two minutes, when VS Code closes, and at the next start
+    when VS Code stopped abruptly (it stayed in Windows forever before).
+  - When the password cannot be handed over, a warning asks you to type it in the Remote Desktop window.
+- **PSSession password no longer saved on disk by VS Code.** *Connect with PSSession* passed the password in the
+  environment of its terminal, which VS Code saves with the terminal (`terminal.integrated.bufferState`) to restore it
+  at the next start. PowerShell now reads it from a file that only you can read and deletes the file at once. In a
+  custom PSSession command, `{password}` still works: it becomes the `$RemoteManagerPassword` variable.
+- **SSH macros never type their commands into the local shell.** With a key, or when the password prompt was not
+  recognised, the commands were typed after a fixed delay of 2 seconds. When ssh failed after that delay, the local
+  shell ran them: on Linux and macOS, an `rm` meant for the server ran on your computer.
+  - The commands are now typed only once the prompt of the remote shell shows.
+  - Without shell integration, or when the prompt is not recognised, a **Send Commands** button lets you say when the
+    remote shell is ready.
+  - When the session ends, the remaining commands are not typed.
+  - Errors are reported in the *SSH Macros* output and the summary, not typed into a session that may still be open.
+- **Imported files can no longer use your saved credentials without asking.** A connection of the file that pointed at
+  a credential already saved on this computer (same identifier, or same name and user name) was linked to it, so
+  connecting sent its saved password to the host written in the file. Such connections are now imported without a
+  credential, and a dialog lists them (connection, host, credential) with a **Use Saved Credentials** button.
+- **No password or passphrase on command lines.**
+  - When PuTTY could not use a password file (before 0.77, or plink not found), the password went on the command line
+    of PuTTY (`-pw`) or was typed into the plink command, which kept it in the shell history. plink now receives it at
+    its password prompt, like ssh, and PuTTY asks for it in its window.
+  - The SSH key generator passed the passphrase to `ssh-keygen -N`: a key with a passphrase is now made by Remote
+    Manager itself, in the same OpenSSH format.
+- **Log level.** The "standard" log level became DEBUG outside VS Code stable (Insiders, VSCodium, Cursor), which wrote
+  the output of SSH terminals into the log file. The level now depends on how the extension runs (installed or under
+  development), not on the name of the editor.
+- **Network paths refused at import.** A key or certificate path starting with `\\` or `//` is ignored when a file is
+  imported: opening it would send your Windows credentials (NTLM) to that server.
+- **Reset Storage deletes the secrets too.** Passwords, root passwords, key passphrases, group credentials, approved
+  VSCode RDP certificates, SFTP host keys, recent connections and remembered folders stayed behind, while the message
+  said "All data cleared". When *Repair Storage* or the storage diagnosis clears a list, the data that belongs to it
+  is deleted as well.
+- **Group credentials follow their group.** Renaming or deleting a connection group moves or removes the credentials
+  assigned to it and to its sub-groups. A new group created under the former name no longer inherits them.
+- `mstsc.exe` is started by its full path, like `cmdkey` and `wsl.exe`.
+- **Imported connections no longer use the credential of a group of this computer either.** A connection of an import
+  file placed in a group that has a credential assigned here (for example "Prod") used that credential without any
+  warning, so connecting sent its saved password to the host written in the file. Such connections are imported in
+  "Imported/<group>", where no credential applies, and the import dialog lists them: **Use Saved Credentials** moves
+  them to their group.
+- **The saved password is no longer typed into prompts that follow the login.** When the prompt of the remote shell was
+  not recognised (for example `➜  ~` of oh-my-zsh), the automation kept watching the terminal and typed the saved
+  password at the next password prompt: sudo, su, or ssh to another server. It is now typed again only while the login
+  goes on: after the server refused it, or at the prompt of the next host of a ProxyJump.
+- **A line that only looks like a shell prompt is no longer taken for one.** A banner line ending with ">" (an e-mail
+  address) cut between two pieces of output could start the root steps, or the commands of a macro, before the login.
+  A prompt now counts once the output stopped there for 250 ms.
+- **`security.disableClipboardShare` can no longer be turned off by a workspace.** It was the only security setting
+  that a `.vscode/settings.json` could override, which re-enabled clipboard (and file copy) redirection for RDP. It now
+  applies to the whole application, like the other security settings.
+- **Encrypted credential export: at least 12 characters.** Any password was accepted, even a single character, for a
+  file that holds every saved password, root password and passphrase and can be attacked offline.
+- **Secrets copied to the clipboard** (generated password, private key) are removed from it after a minute, unless
+  something else was copied meanwhile.
+- **`{password}` in a Remote Desktop launch command** is pointed out when the command is edited: it puts the password
+  on the command line of the client.
+
+### Fixed
+
+- **Edit Connection erased the settings of the connection** when Escape was pressed at its last step (launch command of
+  an RDP connection, port of an SSH, Telnet or VNC connection): custom commands, PSSession command, port, clipboard and
+  printer redirection, assigned macro. A step left with Escape now keeps its value, and a Web connection keeps its
+  settings. When the type changes, the settings of the former type are dropped: an mstsc command no longer becomes the
+  ssh command.
+- **Remote Files view.** The connections could not be expanded; they now open on the root folder of their server.
+- **Reset Storage always ended with "Storage reset failed"**, although everything was deleted: it wrote a setting that
+  VS Code no longer knows.
+- **Assign Macro to Connection had no effect.** The assigned macro is now offered first by *Connect with Macro* and
+  named in the tooltip of the connection, and Telnet connections can have one. Assigning no longer overwrites settings
+  changed since the tree was drawn.
+- **Connect with SSH on an RDP connection** written `server:3390` connected to port 3390, the RDP port. It now uses the
+  SSH port setting, or 22.
+- **Host names with a port or an IPv6 address.**
+  - `192.168.1.10:2222` was taken for an IPv6 address by the file browser and by SSH macros, which then failed.
+  - An IPv6 address was cut at its first colon: `fe80::1` connected to the host "fe80". SSH and Telnet connections now
+    use it whole; RDP and VNC refuse it with a message.
+  - Edit Connection, Duplicate and the import accept the same host names as the connection editor. Edit accepted
+    anything, and the import accepted a port with a VNC host and IPv6 addresses for RDP.
+  - Network diagnostics of a Web connection diagnosed the host "https", and kept the port of `host:port`.
+- **Connect with PuTTY (SSH and Telnet)** ignored the credential assigned to the group, also when
+  `connectionPreferences.defaultMethod` sends Connect to PuTTY.
+- **Connect with PSSession** refused credentials that ask for their password at each connection. It now asks for the
+  password, and for the user name when there is no credential, for that session only. VSCode RDP uses the same lookup
+  as the other launchers, and the choice to ask for the password is kept with the credential when it is edited.
+- **SFTP.** A folder listing was reused for 5 minutes, so *Refresh* did not show the files created on the server outside
+  VS Code. It is reused for 5 seconds now.
+- **Storage diagnosis.** *Reset connections* and *Reset credentials* deleted everything without confirmation: the three
+  resets now ask in a dialog.
+- **A deleted connection stayed in Recent Connections.** It is removed from them, and its remembered remote folder is
+  forgotten.
+- **SSH macro files.** *Edit Servers* dropped the comments of the macro file; it now rewrites its header only. A macro
+  run reads the file again, also when it was changed outside VS Code.
+
+- **Changing the credential of a group had no effect.** The first assignment stayed in use, and deleting a credential
+  left its assignments behind, so *Reassign it* (VSCode RDP) could not fix it. A new assignment for a group and
+  protocol now replaces the previous one, and deleting a credential removes its assignments.
+- **Edit commands of an SSH macro replaced its commands with the examples**, which the next run executed (`echo`,
+  `whoami`, `uptime`). The editor now opens the file of the macro as it is, written from its commands when missing.
+- **Macro variables.** `$HOST` and `$USER` are replaced as whole words only: `$HOSTNAME` became `10.0.0.5NAME`.
+  `$HOME` is now left to the remote shell instead of being replaced with `/home/<user>`.
+- **Macros use the credential that *Connect* uses**, including the one assigned to the group, instead of `root` by
+  default.
+- **Connect with Macro on a Telnet connection opened an SSH session** on port 22. It now opens Telnet on the port of
+  the connection, and no `#` comment line is sent to the device.
+- **Custom commands of RDP connections.** The same custom command launched the Remote Desktop client (cmd.exe), and
+  was also used by *Connect with SSH* and *Connect with PSSession*: setting it for one broke the other two.
+  - *Edit Custom Command* now asks which command to edit: **Remote Desktop launch** or **PowerShell session** (saved
+    separately as `psSessionCommand`).
+  - A PSSession template saved earlier as the custom command keeps working for PSSession, and cmd.exe no longer runs it.
+  - *Connect with SSH* on an RDP connection uses the default ssh command.
+- **SFTP.**
+  - Moving a file to another server renamed it on the first server. It is now copied to the other server, then deleted.
+    Moving a folder between servers is refused with a message.
+  - A move onto an existing file honours the choice to overwrite or not.
+  - Symbolic links to folders open as folders, in the Explorer and in the Remote Files view.
+- **Generate locally (SSH key generator)** wrote a PEM public key, which `authorized_keys` does not accept. Keys are
+  now written in OpenSSH format (`ssh-ed25519 AAAA…`, `ssh-rsa AAAA…`).
+- **Macro Library.** The delete button did nothing, because webviews block `confirm()`. It now asks in a VS Code
+  dialog. The play button was labelled in French.
+- **Network diagnostics.** The report of an IPv6 address could not be saved on Windows (`:` in the file name).
+- **Connection Tester** typed `Test-NetConnection` into the default terminal, so it failed with bash, zsh or cmd, and on
+  Linux and macOS. It now opens a PowerShell terminal on Windows, and tries the port directly on the other systems.
+- ***Ask for password on connect*** saved an empty password instead of deleting it. A password kept under the key of
+  older versions then came back and was used. Both are now deleted.
+- **Text typed into existing terminals.** The multi-terminal broadcast no longer types banners when terminals join or
+  leave, and ignores hidden terminals. *Terminal History* uses the active terminal only when it is at its prompt, and
+  opens a new terminal otherwise.
+- **Host name prompt.** `host:port` is accepted for RDP, SSH and Telnet, and URLs are refused outside Web connections.
+  The connection types that cannot use IPv6 addresses say so.
+- **Deleting a credential group** unlinks the connections that used its credentials.
+- **Stored lists.** Writes started at the same time (connections, credentials, group credentials) no longer overwrite
+  each other. Renaming or deleting a group updates all its connections in one write.
+
+### Removed
+
+- Unused modules and exports: pagination, performance timers, progress helpers, platform helpers, the group manager,
+  default settings and about 70 unused exports. One of them built shell commands from strings.
+- Unused methods of the repositories, the SSH automation, the multi-terminal broadcaster, the command registry and the
+  models, and an SFTP "connection reset" handler that never had any effect.
+- The credentials view registered the refresh command a second time (VS Code refused it) and an internal
+  `remoteManagerCredentials.refresh` command that nothing used.
+
+## [1.0.53] - 2026-10-21
+
+### Fixed
+
+- **SSH passwords typed before the server asked for them.** *Connect* typed the saved password 3 seconds after
+  starting ssh, and SSH macros did the same. When the server took longer to show its password prompt (slow name
+  resolution, network or GSSAPI), OpenSSH discarded the password and the session waited at its prompt. *Connect with
+  Root* and *Connect with SSH* typed it after 1.5 seconds and only recovered with a second attempt; when the prompt
+  came after 7 seconds, `su` and the root password were typed blindly as well and the session stayed at the prompt.
+  All of them now use the same automation, which types the password once the terminal shows the password prompt,
+  however long that takes.
+- **Root password shown in the terminal.** With *Connect with Root* the root password was typed 800 ms after `su -`:
+  when su took longer to ask, the remote terminal displayed it and su then waited for it. `su -` is now typed at the
+  shell prompt and the root password at the su prompt, which is recognised in common languages (for example
+  `Mot de passe :`).
+
+### Changed
+
+- Nothing is typed into an SSH terminal on a timer anymore. When its output cannot be read (no shell integration) or
+  no prompt is recognised within `remoteManager.ssh.automationTimeout`, a notification offers **Type Password** (then
+  **Switch to root** and **Type root Password**), and the button types it when you choose. The automation no longer
+  stops after 8 seconds (15 seconds with root access): the setting is now the time without output before the button
+  is offered.
+- The saved password is no longer typed into prompts that ask for something else (key passphrase, one-time code,
+  password change), nor into prompts shown after the login (sudo). Connection errors and a server asking again after
+  `remoteManager.ssh.maxPasswordAttempts` attempts end the automation with a message; *Connect* now reports them and
+  does not add the connection to the history.
+- Handing the password to ssh through `SSH_ASKPASS` was considered: on Windows it needs a helper program, and a batch
+  file would let a malicious server run commands through the text of its prompts.
+
+## [1.0.52] - 2026-10-21
+
+### Changed
+
+- **Web connections offer the default browser when the interface cannot work inside VS Code.** Before the tab opens,
+  the address and its redirects are checked (one request each, without credentials or cookies): an HTTPS certificate
+  not trusted by the computer (the self-signed certificate of most iDRAC, ESXi, Proxmox VE, Cisco or Aruba devices),
+  `X-Frame-Options` or CSP `frame-ancestors`, HTTP authentication (Basic, Digest, NTLM, Negotiate), or cookies that VS
+  Code drops in the tab (all but `SameSite=None; Secure`). A dialog lists the reasons and opens the browser; when they
+  are only probable (cookies, no answer) the connection can still open in VS Code. An address without scheme on a
+  device that only serves HTTP is reported with a hint to write `http://`. See [Web Connections](README.md#web-connections).
+- The notice of the Web tab says that confirmation dialogs and downloads need the browser.
+
+## [1.0.51] - 2026-10-21
+
+### Added
+
+- **Serial Console** connection type for the console port of Cisco and other equipment (COM port on Windows, tty
+  device on Linux and macOS). The connection editor lists the serial ports with their names and asks for the speed,
+  frame format and flow control (9600 8N1 without flow control by default).
+  - The built-in console is a VS Code terminal backed by a small bridge shipped with the extension: a PowerShell script
+    using `System.IO.Ports.SerialPort` on Windows (`resources/serial/serial-bridge.ps1`, run with
+    `-ExecutionPolicy Bypass -File`), `stty` and `cat` on Linux and macOS (`resources/serial/serial-bridge.sh`). The
+    port and settings are passed as environment variables or separate arguments, never through a shell.
+  - **Send Break** (status bar button and Command Palette, while a built-in console is active), for Cisco password
+    recovery and ROMMON. On Linux and macOS the break is sent with `python3` or, failing that, `perl`.
+  - When the port closes by itself (adapter unplugged, port busy, missing permission) the terminal shows why, with a
+    hint, and Enter reconnects.
+  - *Connect With...* opens a serial connection once with plink, PuTTY, picocom or screen when they are installed;
+    the new setting `remoteManager.serial.defaultClient` (`builtin` by default) chooses the default.
+  - **Quick Actions > Tools > Serial Console** (command *Tools: Serial Console (Direct Connection)*) opens a port
+    without saving a connection; the last port and line settings used are offered first the next time.
+- **WSL** connection type for the WSL distributions of this computer (Windows only): a shell (`wsl.exe -d`, optional
+  Linux account), or SSH, RDP (xrdp, port 3390 by default) or Telnet to a server running in the distribution, with
+  *Connect With...* to use another protocol once. For SSH, RDP and Telnet the distribution is started, kept running by
+  a hidden `wsl.exe` until VS Code closes (WSL otherwise stops it even while sshd or xrdp run), and the client connects
+  once the server answers, on `localhost` or, when WSL does not forward the port there, on the distribution's address.
+
+### Changed
+
+- Creating a connection (also in a group) asks for the type first, then for the host, serial port or distribution,
+  the name, the group, the type's settings and, when the type uses one, the credential. Editing a connection asks for
+  the type before the host.
+- The SSH, Telnet and VNC port prompts share one implementation.
+
+### Compatibility
+
+- Versions up to 1.0.50 do not know the `serial` and `wsl` types: after going back to such a version with serial or
+  WSL connections saved, the connection list is reported as corrupted (the storage repair turns them into SSH
+  connections). Exports containing them are imported by older versions without those connections.
+
+## [1.0.50] - 2026-10-20
+
+### Security
+
+- plink and PuTTY read the saved password from a file instead of the command line (`-pwfile`, PuTTY 0.77 or later,
+  detected with `plink -V`). The file is readable by the current user only, deleted a few seconds after PuTTY
+  starts, when its terminal closes and when VS Code closes; leftovers of an interrupted session are removed at the
+  next start. The password therefore no longer appears in the integrated terminal, in the shell history
+  (PSReadLine keeps every line in `ConsoleHost_history.txt`), in the VS Code command history or in the process list.
+  Older PuTTY versions keep the former `-pw` behaviour.
+- `{password}` in PSSession custom commands becomes a PowerShell variable filled from the terminal's environment,
+  as the default PSSession command already did: the password is no longer typed into the terminal. Templates using
+  `--%`, where PowerShell expands no variable, keep the former text substitution.
+- External RDP (mstsc): the generated `.rdp` file now uses `authentication level:i:2` when a password is saved, so
+  the Remote Desktop client warns when it cannot verify the server identity instead of connecting silently. With an
+  untrusted certificate it asks once per server and can remember the answer. The new application setting
+  `remoteManager.security.rdpServerAuthentication` (`warn` by default, `require`, `none`) chooses the level; `none`
+  restores the former silent connection.
+- `remoteManager.security.disableClipboardShare` now also turns off clipboard redirection (which carries file
+  copies) for the external RDP client, and a connection's `redirectClipboard` / `redirectPrinters` settings are
+  honoured. Both were always on before.
+- Windows credentials stored with `cmdkey` for an RDP session are deleted when the extension stops, instead of
+  remaining when VS Code closed within two minutes of the connection.
+- Key and certificate paths refuse the typographic quotes U+2018 to U+201E, which PowerShell reads as quotes (a key
+  path from an imported file could otherwise close the quoted path in a terminal command). The same applies to
+  values substituted into custom command templates.
+- The encrypted CSV credentials import checks every row like the JSON import (unsafe key paths, unknown categories
+  and authentication methods are dropped, rows without a user name are skipped). When the file would replace stored
+  credentials, a confirmation tells how many; they can be replaced or kept.
+- Deleting a credential also deletes its root password, its key passphrase and its password stored under the former
+  key name, which remained in the secret store.
+- The SSH key generator saves new key pairs in `~/.ssh` (instead of the first workspace folder, which could be
+  committed, or the temporary folder), with the private key readable by the user only, and no longer copies the
+  private key into the Output panel, which VS Code saves in its log folder. Copy Private Key and Open in Editor still work.
+- The password generator no longer shows the password in the notification (notifications stay listed in the
+  notification center): it says that it was copied and offers **Show**, which opens a modal dialog.
+- The SFTP browser uses the saved passphrase of an encrypted key, and authenticates with its password a credential
+  of the password type that still carries an old key path. The host key algorithms offered so far keep their order,
+  so every server keeps presenting the key that was remembered; `rsa-sha2-512`, `rsa-sha2-256` and `ecdsa-sha2-nistp384/521`
+  are offered after them for servers that offered none of the first ones.
+- On Linux, where the temporary folder is shared, the default log folder must be a directory owned by the user; the
+  log file is created with mode 0600 and symbolic links are not followed.
+- The Quick Actions view runs only its own script (Content-Security-Policy with a nonce) and escapes the history it
+  displays; the Web connection page runs no script of its own and reads no local file.
+- Connection commands (Connect, Connect with Root, Connect with SSH, Connect with PSSession, Connect with PuTTY,
+  Browse Files) only act on saved connections: an object that is not a saved connection is refused instead of being
+  used as is. From the Command Palette they now ask which connection to use instead of failing.
+- SSH macros: only `.macro` files of the macro folder update a macro (a file of the same name elsewhere, for example
+  in a cloned repository, is ignored), and their lines are trimmed as when they are read before a run.
+- The broadcast to several terminals says how many lines and characters it is about to send before pasting the
+  clipboard, not only its first 50 characters.
+
+### Fixed
+
+- SSH password automation (*Connect with SSH* on RDP connections, *Connect with Root*) works in VS Code stable. It
+  used the proposed API `terminalDataWriteEvent`, which VS Code stable refuses ("CANNOT use API proposal"): the
+  password was never sent and an error was raised when the automation timed out. Prompts are now read from the
+  output of the ssh command through shell integration (`TerminalShellExecution.read`, stable API); without shell
+  integration the timed fallbacks act as before. Colour and title sequences around prompts no longer hide them.
+  `enabledApiProposals` is removed from the manifest, which also lets `vsce publish` run without bypass options.
+- SSH key and certificate credentials are used by terminal sessions: Connect, Connect with SSH, Connect with Root
+  and SSH macros pass `-i <key>` and `-o CertificateFile=<certificate>` (the key paired with an `id-cert.pub`
+  certificate is found as OpenSSH does). PuTTY keys (`.ppk`) are passed to plink and PuTTY with `-i`.
+- PuTTY over Telnet with a saved password failed at once: plink refuses `-pw` for Telnet ("the -pw option can only
+  be used with the SSH protocol"). The password is no longer added for Telnet. A key credential without a password
+  now keeps its user name in the PuTTY commands.
+- Connect on a Telnet connection uses the Telnet port saved with it (it always used 23 unless the port was written
+  in the host name).
+- Connect on an SSH connection without a user name produced `ssh … @host`, which ssh rejects; ssh now starts with
+  the local account name.
+- Exported connections keep their credential when the file is imported on another installation: imported
+  credentials get new identifiers and the connections are linked to them. Credentials that share a user name but
+  not a name are all imported (only the same name and user name counts as a duplicate).
+- With PuTTY 0.77 or later, passwords with accented characters reach SSH servers in UTF-8 (given with `-pw`, they
+  did not arrive in UTF-8).
+- SFTP browser: a port written in the host name (`host:2222`) is used, as for terminal sessions, and the SSH
+  credential assigned to the connection's group is used when the connection has none.
+- The SFTP file system is registered as case sensitive: two remote files whose names differ only by case are no
+  longer taken for the same file.
+- External PuTTY: a missing PuTTY is reported instead of a false "Launched PuTTY" followed by an unhandled error.
+- Network diagnostics: replies are recognised by their TTL, so a host answering in less than a millisecond
+  (`time<1ms`) or on a non-English Windows (`temps=`) is no longer reported as unreachable; the common ports are
+  scanned once instead of twice.
+- SSH macros use the default shell outside Windows (they required `powershell.exe`), and `$HOME` is `/root` for root.
+- The message shown after renaming a credential group is in English like the rest of the interface.
+
+### Changed
+
+- SSH macros: the macro options describe what they do. *Stop on error* stops at the first server whose SSH session
+  fails (failed commands are not detected), the timeout is recorded with the macro, and the end of a run reads
+  "Commands sent" instead of "SUCCESS".
+- The redundant activation events `onCommand:remote-manager:connection:browse-files` and
+  `onView:remoteManagerRemoteFiles` are removed: VS Code generates them from the contributions.
+- The SFTP connections are closed when the extension is deactivated.
+- Development dependencies: the `brace-expansion` override moves from 2.0.3 to 2.1.7 and `npm audit fix` updates the
+  tooling (22 advisories down to 6). The 6 left come from `@vscode/vsce` 3.x (`braces` has no fixed version) and
+  need vsce 4. Production dependencies are unchanged and have no known vulnerability.
+
+### Removed
+
+- Code that nothing ran: `ConnectCommand`, `RdpConnectionService`, `SshConnectionService`,
+  `Connection.createSshTerminal` and unused SFTP helpers.
+- The hidden debug commands `remote-manager:debug:secrets` (it checked a hard-coded credential identifier) and
+  `remote-manager:debug:ssh` (it typed the password of the first SSH connection into a terminal). Neither was
+  listed in the Command Palette or a menu.
+
+### Tests
+
+- ESLint reports no warning (147 before) and `npm test` runs 469 tests plus the six legacy suites. New suites cover
+  the RDP file settings, credential deletion, the JSON and CSV imports, key and certificate options, the PuTTY
+  password file (with the real plink logging in to a local test SSH server), the webviews and the connection
+  commands. The `{password}` variable form is checked in the real PowerShell for every password of the test corpus.
+- The SSH automation tests feed the prompts through shell integration and cover the case without any output source.
+- The `ssh-keygen` tests use `%SystemRoot%\System32\whoami.exe` and a home folder of their own, so they pass from
+  Git Bash and never touch the real `~/.ssh`.
+
+## [1.0.49] - 2026-10-20
 
 ### Changed
 
 - README and Marketplace page: added a screenshot presenting the extension (`assets/Presentation.png`).
+
+### Fixed
+
+- The `repository` field pointed to `mavenshu/remote-manager` with a `git+https` URL; it now points to
+  `https://github.com/Mavenshu/Remote-Manager.git`, so the Marketplace links to the right repository and
+  README images resolve to it.
+
+## [1.0.48] - 2026-10-20
+
+### Changed
 
 - VSCode RDP: the floating **VSCode RDP controls** button is removed, because it covered the remote desktop
   and blocked clicks under it. The information bar is reopened with the new **Show VSCode RDP Controls**
